@@ -1,1 +1,30 @@
-GET 
+PUT http://localhost:5296/
+
+###
+
+GET http://localhost:5296/
+
+###
+
+GET http://localhost:5296/test
+
+###
+
+GET http://localhost:5296/user/6/name/t
+
+###
+
+GET http://localhost:5296/report/5
+
+###
+
+GET http://localhost:5296/file/longname.jpg
+
+###
+
+GET http://localhost:5296/search?queary=hello&lang=en
+
+###
+
+# GET http://localhost:5296/stock/food/10/cookies?inStock=false
+# GET http://localhost:5296/stock/food/10?inStock=false
