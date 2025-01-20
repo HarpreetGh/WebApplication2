@@ -1,30 +1,33 @@
-PUT http://localhost:5296/
-
-###
-
 GET http://localhost:5296/
 
 ###
 
-GET http://localhost:5296/test
+GET http://localhost:5296/blogs
 
 ###
 
-GET http://localhost:5296/user/6/name/t
+GET http://localhost:5296/blogs/2
 
 ###
 
-GET http://localhost:5296/report/5
+POST http://localhost:5296/blogs
+Content-Type: application/json
+
+{
+  "Title": "New Blog",
+  "Body": "This is a new blog"
+}
 
 ###
 
-GET http://localhost:5296/file/longname.jpg
+DELETE http://localhost:5296/blogs/0
 
 ###
 
-GET http://localhost:5296/search?queary=hello&lang=en
+PUT http://localhost:5296/blogs/1
+Content-Type: application/json
 
-###
-
-# GET http://localhost:5296/stock/food/10/cookies?inStock=false
-# GET http://localhost:5296/stock/food/10?inStock=false
+{
+  "Title": "REPLACED",
+  "Body": "HAHA"
+}

@@ -1,23 +1,41 @@
 
 var builder = WebApplication.CreateBuilder(args);
-// builder.Services.AddControllers();
 var app = builder.Build();
 
-app.MapGet("/", () => "GET!");
-// app.MapPut("/", () => "PUT!");
-// app.MapGet("/test", () => "TEST GET!");
-// app.MapPost("/test", () => "TEST POST!");
-// app.MapDelete("/test", () => "TEST DELETE!");
-// app.MapControllers();
-// app.MapControllerRoute("/weather", "{controller=weatherController}");
-// app.MapControllers("WeatherForecast");
-app.MapGet("/product/{id:int:min(6)}", (int id) => $"product {id}");
-app.MapGet("/user/{id:int}/name/{name:alpha}", (int id, char name) => $"User {id}, Name {name}");
-app.MapGet("/report/{year?}", (int year = 2016) => $"Report {year}");
-app.MapGet("file/{*path}", (string path) => $"File {path}");
-app.MapGet("/search", (string queary, string lang) => $"Search {queary} in language {lang}");
+var blogs = new List<Blog>
+{
+    new Blog { Title = "A", Body = "Message A" },
+    new Blog { Title = "B", Body = "Message B" }
+};
 
-app.MapGet("/stock/{category}/{id:int?}/{*extra}",
-    (string category, bool inStock, int? id = 0, string? extra = "") => $"Stock {category}, ID {id}, Extra {extra}, In Stock {inStock}");
-
+app.MapGet("/", () => "HELLO!");
+app.MapGet("/blogs", () => blogs);
+app.MapGet("/blogs/{id:int:min(0)}", (int id) => blogs != null && id < blogs.Count? Results.Ok(blogs[id]) : Results.NotFound());
+app.MapPost("/blogs", (Blog blog) => {
+    blogs.Add(blog);
+    return Results.Created($"/blogs/{blogs.Count - 1}", blog);
+});
+app.MapDelete("/blogs/{id:int:min(0)}", (int id)=> {
+    if (id < blogs.Count) {
+        blogs.Remove(blogs[id]);
+        Results.NoContent();
+    }
+    else {
+        Results.NotFound();
+    }
+});
+app.MapPut("/blogs/{id:int:min(0)}", (int id, Blog blog)=> {
+    if (id < blogs.Count) {
+        blogs[id] = blog;
+        Results.Ok(blog);
+    }
+    else {
+        Results.NotFound();
+    }
+});
 app.Run();
+
+public class Blog {
+    public required string Title {get; set;}
+    public required string Body {get; set;}
+}
