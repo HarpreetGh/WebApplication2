@@ -1,33 +1,3 @@
-GET http://localhost:5296/
+GET http://localhost:5296
 
 ###
-
-GET http://localhost:5296/blogs
-
-###
-
-GET http://localhost:5296/blogs/2
-
-###
-
-POST http://localhost:5296/blogs
-Content-Type: application/json
-
-{
-  "Title": "New Blog",
-  "Body": "This is a new blog"
-}
-
-###
-
-DELETE http://localhost:5296/blogs/0
-
-###
-
-PUT http://localhost:5296/blogs/1
-Content-Type: application/json
-
-{
-  "Title": "REPLACED",
-  "Body": "HAHA"
-}
