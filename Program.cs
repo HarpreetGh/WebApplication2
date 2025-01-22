@@ -1,30 +1,49 @@
+using System.Text.Json;
+using System.Xml.Serialization;
+
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddSingleton<ITest, MyServiceClass>();
+builder.Services.ConfigureHttpJsonOptions(option => {
+    option.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+});
 
 var app = builder.Build();
 
+var samplePerson = new Person { UserName = "Alice", UserAge= 20 };
+
 app.Use(async (context, next) => {
-    var myService = context.RequestServices.GetService<ITest>();
-    myService?.LogCreation("MiddleWear");
     await next.Invoke();
 });
 
 app.MapGet("/", () => "HELLO!");
-app.MapGet("/test", (ITest ct) => { ct.LogCreation("Test"); return "Test"; });
+app.MapGet("/manual-json", () => {
+    string jsonStr = JsonSerializer.Serialize(samplePerson);
+    return TypedResults.Text(jsonStr, "application/json");
+});
+
+app.MapGet("/custom-serializer", () => {
+    var options = new JsonSerializerOptions {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseUpper
+    };
+    string customJsonStr = JsonSerializer.Serialize(samplePerson, options);
+    return TypedResults.Text(customJsonStr, "application/json");
+});
+
+app.MapGet("/json", () => TypedResults.Json(samplePerson));
+
+app.MapGet("/auto", () => samplePerson);
+
+app.MapGet("/xml", () => {
+    var xmlSerializer = new XmlSerializer(typeof(Person));
+    var strinWriter = new StringWriter();
+    xmlSerializer.Serialize(strinWriter, samplePerson);
+    var xmlOutput = strinWriter.ToString();
+    return TypedResults.Text(xmlOutput, "application/xml");
+});
+
+
 app.Run();
 
-public interface ITest {
-    public void LogCreation(string message);
-}
-
-public class MyServiceClass: ITest {
-    private readonly int _serviceId;
-
-    public MyServiceClass() {
-        _serviceId = new Random().Next(100, 999);
-    }
-
-    public void LogCreation(string message = "") {
-        Console.WriteLine($"SERVER CREATED. serviceID: {_serviceId} {(message.Length > 0? $"Message: {message}" : "")}");
-    }
+public class Person {
+    required public string UserName { get; set; }
+    required public int UserAge { get; set; }
 }

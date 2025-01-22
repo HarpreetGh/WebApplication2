@@ -1,3 +1,21 @@
-GET http://localhost:5296/test
+GET http://localhost:5296/
 
 ###
+
+GET http://localhost:5296/manual-json
+
+###
+
+GET http://localhost:5296/custom-serializer
+
+###
+
+GET http://localhost:5296/json
+
+###
+
+GET http://localhost:5296/auto
+
+###
+
+GET http://localhost:5296/xml
