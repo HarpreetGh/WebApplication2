@@ -1,45 +1,43 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.ConfigureHttpJsonOptions(option => {
-    option.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-});
 
 var app = builder.Build();
-
-var samplePerson = new Person { UserName = "Alice", UserAge= 20 };
 
 app.Use(async (context, next) => {
     await next.Invoke();
 });
 
 app.MapGet("/", () => "HELLO!");
-app.MapGet("/manual-json", () => {
-    string jsonStr = JsonSerializer.Serialize(samplePerson);
-    return TypedResults.Text(jsonStr, "application/json");
+
+app.MapPost("/auto", (Person p) => p);
+app.MapPost("/json", async (HttpContext content) => {
+    Person? p = await content.Request.ReadFromJsonAsync<Person>();
+    if (p != null) { p.UserAge *= 2; }
+    return p;
 });
 
-app.MapGet("/custom-serializer", () => {
+app.MapPost("/custom-options", async (HttpContext content) => {
     var options = new JsonSerializerOptions {
-        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseUpper
+        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow
     };
-    string customJsonStr = JsonSerializer.Serialize(samplePerson, options);
-    return TypedResults.Text(customJsonStr, "application/json");
+
+    Person? p = await content.Request.ReadFromJsonAsync<Person>(options);
+    if (p != null) { p.UserAge *= 2; }
+    return p;
 });
 
-app.MapGet("/json", () => TypedResults.Json(samplePerson));
+app.MapPost("/xml", async (HttpContext context) => {
+    var sr = new StreamReader(context.Request.Body);
+    var body = await sr.ReadToEndAsync();
+    // var body2 = context.Request.Body.ReadAsync();
 
-app.MapGet("/auto", () => samplePerson);
-
-app.MapGet("/xml", () => {
-    var xmlSerializer = new XmlSerializer(typeof(Person));
-    var strinWriter = new StringWriter();
-    xmlSerializer.Serialize(strinWriter, samplePerson);
-    var xmlOutput = strinWriter.ToString();
-    return TypedResults.Text(xmlOutput, "application/xml");
+    var xmlSeralizer = new XmlSerializer(typeof(Person));
+    var stringReader = new StringReader(body);
+    var p = xmlSeralizer.Deserialize(stringReader) as Person;
 });
-
 
 app.Run();
 

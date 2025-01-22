@@ -2,20 +2,32 @@ GET http://localhost:5296/
 
 ###
 
-GET http://localhost:5296/manual-json
+POST http://localhost:5296/auto
+content-type: application/json
+
+{
+    "UserName": "Tyler",
+    "UserAge": 20
+}
 
 ###
 
-GET http://localhost:5296/custom-serializer
+POST http://localhost:5296/json
+content-type: application/json
+
+{
+    "UserName": "Tyler",
+    "UserAge": 20,
+    "test": "skipped"
+}
 
 ###
 
-GET http://localhost:5296/json
+POST http://localhost:5296/custom-options
+content-type: application/json
 
-###
-
-GET http://localhost:5296/auto
-
-###
-
-GET http://localhost:5296/xml
+{
+    "UserName": "Tyler",
+    "UserAge": 20,
+    "test": "rejected"
+}
