@@ -26,3 +26,11 @@ c:\Users\harpr\OneDrive\Documents\GitHub\WebApplication2\WebApplication2\obj\Deb
 c:\Users\harpr\OneDrive\Documents\GitHub\WebApplication2\WebApplication2\obj\Debug\net9.0\WebApplication2.pdb
 c:\Users\harpr\OneDrive\Documents\GitHub\WebApplication2\WebApplication2\obj\Debug\net9.0\WebApplication2.genruntimeconfig.cache
 c:\Users\harpr\OneDrive\Documents\GitHub\WebApplication2\WebApplication2\obj\Debug\net9.0\ref\WebApplication2.dll
+c:\Users\harpr\OneDrive\Documents\GitHub\WebApplication2\WebApplication2\bin\Debug\net9.0\Microsoft.AspNetCore.OpenApi.dll
+c:\Users\harpr\OneDrive\Documents\GitHub\WebApplication2\WebApplication2\bin\Debug\net9.0\Microsoft.OpenApi.dll
+c:\Users\harpr\OneDrive\Documents\GitHub\WebApplication2\WebApplication2\bin\Debug\net9.0\Swashbuckle.AspNetCore.Swagger.dll
+c:\Users\harpr\OneDrive\Documents\GitHub\WebApplication2\WebApplication2\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerGen.dll
+c:\Users\harpr\OneDrive\Documents\GitHub\WebApplication2\WebApplication2\bin\Debug\net9.0\Swashbuckle.AspNetCore.SwaggerUI.dll
+c:\Users\harpr\OneDrive\Documents\GitHub\WebApplication2\WebApplication2\obj\Debug\net9.0\WebApplication2.csproj.AssemblyReference.cache
+c:\Users\harpr\OneDrive\Documents\GitHub\WebApplication2\WebApplication2\obj\Debug\net9.0\WebApplication2.MvcApplicationPartsAssemblyInfo.cs
+c:\Users\harpr\OneDrive\Documents\GitHub\WebApplication2\WebApplication2\obj\Debug\net9.0\WebAppli.0DB3FC1A.Up2Date
