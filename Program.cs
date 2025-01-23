@@ -1,75 +1,54 @@
-
-using System.Runtime.Intrinsics.Arm;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-public class User {
-    public required string Name {get; set;}
-    public required string Email {get; set;}
-    public required string Password {get; set;}
+var builder = WebApplication.CreateBuilder(args);
+var app = builder.Build();
 
-    private string hash {get; set;}
+Blog defaultBlog = new Blog("First Blog", "I am happy!");
+List<Blog> blogs= [defaultBlog];
 
-    public string SerializeUserData() {
-        if (ValidUserData()) {
-            EncryptData();
-            hash = GenerateHash();
-            return JsonSerializer.Serialize(this);
-        }
-        else {
-            Console.WriteLine("User Data is not valid");
-            return string.Empty;
-        }
+app.Use(async (context, next) => {
+    var startTime = DateTime.Now;
+    await next.Invoke();
+    Console.WriteLine($"Path Called: {context.Request.Path} in Duration: {DateTime.Now - startTime}");
+});
+
+app.UseWhen(context => context.Request.Path == "/reset",
+    app => app.Use(async (context, next) => {
+    if (context.Request.Headers["pass"] == "P@ssword!") {
+        await next.Invoke();
     }
-
-    public bool ValidUserData() {
-        // This sends data only if it's valid
-        return !(string.IsNullOrEmpty(Name) || string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password));
+    else {
+        context.Response.StatusCode = 403;
+        await context.Response.WriteAsync("Access Denied");
+        Console.WriteLine("Access Denied");
     }
+}));
 
-    private void EncryptData() {
-        // This protects Password even when sent.
-        Password = Convert.ToBase64String(Encoding.UTF8.GetBytes(Password));
-        Console.WriteLine("Encrypted");
+app.MapGet("/", () => "Hello World!");
+app.MapGet("/blogs", () => blogs);
+
+app.MapPost("/newBlog/{title:minlength(3)}", (string title, string? body) => { blogs.Add(new Blog(title, body)); return Results.Ok(blogs.Last()); });
+
+app.MapPost("/newBlog/", (Blog b) => { blogs.Add(b); return Results.Ok(b); });
+
+app.MapPost("/newBlogHash/", (string bStr) => {
+    // not tested but idea
+    string hash = Convert.ToBase64String(Encoding.UTF8.GetBytes(bStr));
+    if(hash != hash) {
+        return Results.Problem("Hash doesn't match");
     }
+    Blog b = JsonSerializer.Deserialize<Blog>(bStr);
+    blogs.Add(b);
+    return Results.Ok(b);
+});
 
-    public User? DeserializeUserData(string sUser, bool isTrustedSource) {
-        // This protects system from Deserializing from unknown source.
-        if (isTrustedSource) {
-            string inHash = GenerateHash(sUser);
-            if (string.Equals(hash, inHash)) {
-                return JsonSerializer.Deserialize<User>(sUser);
-            }
-            else {
-                Console.WriteLine("Hash not matched");
-                return null;
-            }
-        }
-        else { 
-            Console.WriteLine("Not Trusted Source");
-            return null;
-        }
-    }
+app.MapPost("/reset", () => { blogs.Clear(); blogs = [defaultBlog]; return Results.Accepted("RESET!"); });
 
-    private string GenerateHash(string? u = null) {
-        using(SHA256 sha = SHA256.Create()) {
-            byte[] hashBits = sha.ComputeHash(Encoding.UTF8.GetBytes(u ?? JsonSerializer.Serialize(this)));
-            return Convert.ToBase64String(hashBits);
-        }
-    }
-}
+app.Run();
 
-public class Program {
-    public static void Main() {
-        User u = new User { Name = "Tony", Email = "T@gmail.com", Password = "P@ssword123"};
-        string ds = u.SerializeUserData();
-
-        Console.WriteLine($"ds {ds}");
-
-        // var deSel = u.DeserializeUserData("{\"Name\": \"Tim\", \"Email\": \"Tim@gmail.com\", \"Password\": \"Te$t\"}", true);
-        var deSel = u.DeserializeUserData(ds, true);
-        Console.WriteLine($"deSel?.Name {deSel?.Name}");
-
-    }
+public class Blog(string title, string body)
+{
+    public string Title { get; set; } = title;
+    public string Body { get; set; } = body;
 }

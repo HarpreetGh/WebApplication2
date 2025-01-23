@@ -1,33 +1,23 @@
-GET http://localhost:5296/
+GET http://localhost:5296/blogs
 
 ###
 
-POST http://localhost:5296/auto
+POST http://localhost:5296/newBlog/2nd-Blog?body=If_this_works_its_a_miracle!
 content-type: application/json
-
-{
-    "UserName": "Tyler",
-    "UserAge": 20
-}
 
 ###
 
-POST http://localhost:5296/json
-content-type: application/json
-
-{
-    "UserName": "Tyler",
-    "UserAge": 20,
-    "test": "skipped"
-}
+POST http://localhost:5296/reset
+# pass: P@ssword!
 
 ###
 
-POST http://localhost:5296/custom-options
+POST http://localhost:5296/newBlog
 content-type: application/json
 
 {
-    "UserName": "Tyler",
-    "UserAge": 20,
-    "test": "rejected"
+    "Title": "Json Blog",
+    "Body": "No way i remembered this :haha:"
 }
+
+###
