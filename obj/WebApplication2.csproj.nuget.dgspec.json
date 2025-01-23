@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Users\\harpr\\OneDrive\\Documents\\GitHub\\WebApplication2\\WebApplication2\\WebApplication2.csproj": {}
+    "C:\\Users\\harpr\\OneDrive\\Documents\\GitHub\\WebApplication2\\WebApplication2\\WebApplication2.csproj": {}
   },
   "projects": {
-    "c:\\Users\\harpr\\OneDrive\\Documents\\GitHub\\WebApplication2\\WebApplication2\\WebApplication2.csproj": {
+    "C:\\Users\\harpr\\OneDrive\\Documents\\GitHub\\WebApplication2\\WebApplication2\\WebApplication2.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Users\\harpr\\OneDrive\\Documents\\GitHub\\WebApplication2\\WebApplication2\\WebApplication2.csproj",
+        "projectUniqueName": "C:\\Users\\harpr\\OneDrive\\Documents\\GitHub\\WebApplication2\\WebApplication2\\WebApplication2.csproj",
         "projectName": "WebApplication2",
-        "projectPath": "c:\\Users\\harpr\\OneDrive\\Documents\\GitHub\\WebApplication2\\WebApplication2\\WebApplication2.csproj",
+        "projectPath": "C:\\Users\\harpr\\OneDrive\\Documents\\GitHub\\WebApplication2\\WebApplication2\\WebApplication2.csproj",
         "packagesPath": "C:\\Users\\harpr\\.nuget\\packages\\",
-        "outputPath": "c:\\Users\\harpr\\OneDrive\\Documents\\GitHub\\WebApplication2\\WebApplication2\\obj\\",
+        "outputPath": "C:\\Users\\harpr\\OneDrive\\Documents\\GitHub\\WebApplication2\\WebApplication2\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\harpr\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -47,6 +47,28 @@
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
               "version": "[9.0.1, )"
+            },
+            "NSwag.ApiDescription.Client": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[14.2.0, )"
+            },
+            "NSwag.AspNetCore": {
+              "target": "Package",
+              "version": "[14.2.0, )"
+            },
+            "NSwag.CodeGeneration.CSharp": {
+              "target": "Package",
+              "version": "[14.2.0, )"
+            },
+            "NSwag.CodeGeneration.TypeScript": {
+              "target": "Package",
+              "version": "[14.2.0, )"
+            },
+            "NSwag.Core": {
+              "target": "Package",
+              "version": "[14.2.0, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
