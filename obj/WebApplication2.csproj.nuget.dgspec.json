@@ -48,28 +48,6 @@
               "target": "Package",
               "version": "[9.0.1, )"
             },
-            "NSwag.ApiDescription.Client": {
-              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[14.2.0, )"
-            },
-            "NSwag.AspNetCore": {
-              "target": "Package",
-              "version": "[14.2.0, )"
-            },
-            "NSwag.CodeGeneration.CSharp": {
-              "target": "Package",
-              "version": "[14.2.0, )"
-            },
-            "NSwag.CodeGeneration.TypeScript": {
-              "target": "Package",
-              "version": "[14.2.0, )"
-            },
-            "NSwag.Core": {
-              "target": "Package",
-              "version": "[14.2.0, )"
-            },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[7.2.0, )"

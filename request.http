@@ -1,23 +1,19 @@
-GET http://localhost:5296/blogs
+GET http://localhost:5294
 
 ###
 
-POST http://localhost:5296/newBlog/2nd-Blog?body=If_this_works_its_a_miracle!
-content-type: application/json
+GET http://localhost:5294/?secure=true&authenticated=true
 
 ###
 
-POST http://localhost:5296/reset
-# pass: P@ssword!
+GET http://localhost:5294/unauthorized?secure=true
 
 ###
 
-POST http://localhost:5296/newBlog
-content-type: application/json
+GET http://localhost:5294/?secure=true&authenticated=true&input=<script>
 
-{
-    "Title": "Json Blog",
-    "Body": "No way i remembered this :haha:"
-}
+###
+
+GET http://localhost:5294/?secure=true
 
 ###
