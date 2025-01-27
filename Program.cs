@@ -1,125 +1,91 @@
-using System;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.AspNetCore.Http;
-using System.Threading.Tasks;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure to listen on HTTP only for simplicity
-builder.WebHost.ConfigureKestrel(options =>
+// Add services to the container.
+builder.Services.AddControllers();
+builder.Services.AddSwaggerGen(c =>
 {
-    options.ListenLocalhost(5294); // HTTP only
+    c.SwaggerDoc("v1", new() { Title = "My API", Version = "v1" });
 });
 
 var app = builder.Build();
 
-// Middleware to log security events if response status indicates an issue
-app.Use(async (context, next) =>
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
 {
-    await next(); // Run the next middleware first
-
-    if (context.Response.StatusCode >= 400)
-    {
-        Console.WriteLine($"Security Event: {context.Request.Path} - Status Code: {context.Response.StatusCode}");
-    }
-});
-
-// Simulated HTTPS Enforcement Middleware
-app.Use(async (context, next) =>
-{
-    // Check for a query parameter to simulate HTTPS enforcement (e.g., "?secure=true")
-    if (context.Request.Query["secure"] != "true")
-    {
-        context.Response.StatusCode = 400;
-        await context.Response.WriteAsync("Simulated HTTPS Required");
-        return;
-    }
-
-    await next();
-});
-
-// Middleware for input validation
-app.Use(async (context, next) =>
-{
-    var input = context.Request.Query["input"];
-    if (!IsValidInput(input))
-    {
-        if (!context.Response.HasStarted)
-        {
-            context.Response.StatusCode = 400;
-            await context.Response.WriteAsync("Invalid Input");
-        }
-        return;
-    }
-
-    await next();
-});
-
-// Helper method for input validation
-static bool IsValidInput(string input)
-{
-    // Checks for any unsafe characters or patterns, including "<script>"
-    return string.IsNullOrEmpty(input) || (input.All(char.IsLetterOrDigit) && !input.Contains("<script>"));
+    app.UseDeveloperExceptionPage();
+    app.UseSwagger();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API v1"));
 }
 
-// Middleware for short-circuiting unauthorized access
-app.Use(async (context, next) =>
+app.UseHttpsRedirection();
+
+app.UseRouting();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+var users = new Dictionary<int, User>();
+
+app.MapGet("/", () =>
 {
-    if (context.Request.Path == "/unauthorized")
-    {
-        if (!context.Response.HasStarted)
-        {
-            context.Response.StatusCode = 401;
-            await context.Response.WriteAsync("Unauthorized Access");
-        }
-        return; // Exit middleware pipeline early if unauthorized
-    }
-    await next();
+    return TypedResults.Ok("Hello World!");
 });
 
-// Middleware for simulated authentication and secure cookies
-app.Use(async (context, next) =>
+app.MapGet("/users", () =>
 {
-    // Simulate authentication with a query parameter (e.g., "?authenticated=true")
-    var isAuthenticated = context.Request.Query["authenticated"] == "true";
-    if (!isAuthenticated)
-    {
-        if (!context.Response.HasStarted)
-        {
-            context.Response.StatusCode = 403;
-            await context.Response.WriteAsync("Access Denied");
-        }
-        return;
-    }
-
-    context.Response.Cookies.Append("SecureCookie", "SecureData", new CookieOptions
-    {
-        HttpOnly = true,
-        Secure = true
-    });
-
-    await next();
+    return TypedResults.Ok(users.Values);
 });
 
-// Middleware for asynchronous processing
-app.Use(async (context, next) =>
+app.MapGet("/users/{id}", Results<Ok<User>, NotFound>(int id) =>
 {
-    await Task.Delay(100); // Simulate async operation
-    if (!context.Response.HasStarted)
+    if (users.TryGetValue(id, out var user))
     {
-        await context.Response.WriteAsync("Processed Asynchronously\n");
+        return TypedResults.Ok(user);
     }
-    await next();
+    return TypedResults.NotFound();
 });
 
-// Final Response Middleware
-app.Run(async (context) =>
+app.MapPost("/users", Results<Conflict<string>, Created<User>>(User user) =>
 {
-    if (!context.Response.HasStarted)
+    if (users.ContainsKey(user.Id))
     {
-        await context.Response.WriteAsync("Final Response from Application\n");
+        return TypedResults.Conflict("User with this ID already exists.");
     }
+    users[user.Id] = user;
+    return TypedResults.Created($"/users/{user.Id}", user);
+});
+
+app.MapPut("/users/{id}", Results<Ok<User>, NotFound>(int id, User updatedUser) =>
+{
+    if (users.ContainsKey(id))
+    {
+        users[id] = updatedUser;
+        return TypedResults.Ok(updatedUser);
+    }
+    return TypedResults.NotFound();
+});
+
+app.MapDelete("/users/{id}", Results<NoContent, NotFound>(int id) =>
+{
+    if (users.Remove(id))
+    {
+        return TypedResults.NoContent();
+    }
+    return TypedResults.NotFound();
 });
 
 app.Run();
+
+public class User
+{
+    public int Id { get; set; }
+    required public string Name { get; set; }
+    public int Age { get; set; }
+}
