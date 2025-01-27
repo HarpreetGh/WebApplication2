@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "My API", Version = "v1" });
@@ -28,6 +29,59 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseAuthorization();
+
+app.Use(async (context, next) => {
+    try {
+        await next.Invoke();
+    }
+    catch (Exception ex) {
+        context.Response.StatusCode = 500;
+        Console.WriteLine($"Exception: {ex.Message}");
+    }
+    finally {
+        if (400 <= context.Response.StatusCode) {
+            if (500 <= context.Response.StatusCode) {
+                await context.Response.WriteAsync("Internal Server Error");
+            }
+            Logger(context);
+        }
+    }
+});
+
+static void Logger(HttpContext context) => Console.WriteLine($"{DateTime.UtcNow}, {context.Response.StatusCode}, {context.Request.Method}, {context.Request.Path}");
+
+app.Use(async (context, next) => {
+    if (context.Request.Method == "POST" || context.Request.Method == "PUT")
+    {
+        if (!context.Request.HasJsonContentType())
+        {
+            context.Response.StatusCode = 415;
+            await context.Response.WriteAsync("Unsupported Media Type");
+            return;
+        }
+        else {
+            var user = await context.Request.ReadFromJsonAsync<User>();
+            if (user == null || user.Id == 0 || string.IsNullOrEmpty(user.Name) || string.IsNullOrEmpty(user.Email))
+            {
+                context.Response.StatusCode = 400;
+                await context.Response.WriteAsync("Bad Request");
+                return;
+            }
+        }
+
+    }
+    await next.Invoke();
+});
+
+// app.Use(async (context, next) => {
+//     if (context.Request.Headers["knownUser"] == "true") {
+//         await next.Invoke();
+//     }
+//     else {
+//         context.Response.StatusCode = 403;
+//         await context.Response.WriteAsync("Forbidden");
+//     }
+// });
 
 app.MapControllers();
 
@@ -87,5 +141,6 @@ public class User
 {
     public int Id { get; set; }
     required public string Name { get; set; }
+    required public string Email { get; set; }
     public int Age { get; set; }
 }
