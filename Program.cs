@@ -1,17 +1,56 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+var secretKey = "e6b99e83db6f884a225874f1201cb7eeaa70c58fa12d3b4a23642657dcec72a6d8b52c7e009ea3def1aeaca86464f6c4dafdaf5d19d19e835c2cb8de7f78201eb99b5bb08c433fce32632e1f71fb2363da09fdac7bfa74e94527777d534d1716453fc3a365014773b9ffb7cf540603708db9a7aad5160de63a4081ab4aa81c23";
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = "yourIssuer",
+            ValidAudience = "yourAudience",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+        };
+    });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new() { Title = "My API", Version = "v1" });
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"token"
+    });
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                },
+                Scheme = "Bearer",
+                Name = "Bearer",
+                In = ParameterLocation.Header
+            },
+            new string[] { }
+        }
+    });
 });
 
 var app = builder.Build();
@@ -21,14 +60,12 @@ if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API v1"));
+    app.UseSwaggerUI();
+    // app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API v1"));
 }
 
 app.UseHttpsRedirection();
-
 app.UseRouting();
-
-app.UseAuthorization();
 
 app.Use(async (context, next) => {
     try {
@@ -39,16 +76,21 @@ app.Use(async (context, next) => {
         Console.WriteLine($"Exception: {ex.Message}");
     }
     finally {
-        if (400 <= context.Response.StatusCode) {
-            if (500 <= context.Response.StatusCode) {
-                await context.Response.WriteAsync("Internal Server Error");
-            }
-            Logger(context);
+        RequestLogger(context);
+        if (500 <= context.Response.StatusCode) {
+            await context.Response.WriteAsync("Internal Server Error");
         }
+        ResponseLogger(context);
     }
 });
 
-static void Logger(HttpContext context) => Console.WriteLine($"{DateTime.UtcNow}, {context.Response.StatusCode}, {context.Request.Method}, {context.Request.Path}");
+static void RequestLogger(HttpContext context) =>
+    Console.WriteLine($"{DateTime.UtcNow}, {context.Request.Method}, {context.Request.Path} {context.Request.QueryString}");
+static void ResponseLogger(HttpContext context) =>
+    Console.WriteLine($"{DateTime.UtcNow}, {context.Response.StatusCode}, {context.Request.Method}, {context.Request.Path}");
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.Use(async (context, next) => {
     if (context.Request.Method == "POST" || context.Request.Method == "PUT")
@@ -59,29 +101,9 @@ app.Use(async (context, next) => {
             await context.Response.WriteAsync("Unsupported Media Type");
             return;
         }
-        else {
-            var user = await context.Request.ReadFromJsonAsync<User>();
-            if (user == null || user.Id == 0 || string.IsNullOrEmpty(user.Name) || string.IsNullOrEmpty(user.Email))
-            {
-                context.Response.StatusCode = 400;
-                await context.Response.WriteAsync("Bad Request");
-                return;
-            }
-        }
-
     }
     await next.Invoke();
 });
-
-// app.Use(async (context, next) => {
-//     if (context.Request.Headers["knownUser"] == "true") {
-//         await next.Invoke();
-//     }
-//     else {
-//         context.Response.StatusCode = 403;
-//         await context.Response.WriteAsync("Forbidden");
-//     }
-// });
 
 app.MapControllers();
 
@@ -95,7 +117,7 @@ app.MapGet("/", () =>
 app.MapGet("/users", () =>
 {
     return TypedResults.Ok(users.Values);
-});
+}).RequireAuthorization();
 
 app.MapGet("/users/{id}", Results<Ok<User>, NotFound>(int id) =>
 {
@@ -104,7 +126,7 @@ app.MapGet("/users/{id}", Results<Ok<User>, NotFound>(int id) =>
         return TypedResults.Ok(user);
     }
     return TypedResults.NotFound();
-});
+}).RequireAuthorization();
 
 app.MapPost("/users", Results<Conflict<string>, Created<User>>(User user) =>
 {
@@ -114,7 +136,7 @@ app.MapPost("/users", Results<Conflict<string>, Created<User>>(User user) =>
     }
     users[user.Id] = user;
     return TypedResults.Created($"/users/{user.Id}", user);
-});
+});//.RequireAuthorization();
 
 app.MapPut("/users/{id}", Results<Ok<User>, NotFound>(int id, User updatedUser) =>
 {
@@ -124,7 +146,7 @@ app.MapPut("/users/{id}", Results<Ok<User>, NotFound>(int id, User updatedUser) 
         return TypedResults.Ok(updatedUser);
     }
     return TypedResults.NotFound();
-});
+}).RequireAuthorization();
 
 app.MapDelete("/users/{id}", Results<NoContent, NotFound>(int id) =>
 {
@@ -133,6 +155,37 @@ app.MapDelete("/users/{id}", Results<NoContent, NotFound>(int id) =>
         return TypedResults.NoContent();
     }
     return TypedResults.NotFound();
+}).RequireAuthorization();
+
+app.MapPost("/token", Results<BadRequest<string>, Ok<JwtPayload>>(User user) =>
+{
+    if (user == null || string.IsNullOrEmpty(user.Name) || string.IsNullOrEmpty(user.Email))
+    {
+        return TypedResults.BadRequest("Invalid user data.");
+    }
+
+    var claims = new[]
+    {
+        new Claim(JwtRegisteredClaimNames.Sub, user.Name),
+        new Claim(JwtRegisteredClaimNames.Email, user.Email),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+    };
+
+    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+    var token = new JwtSecurityToken(
+        issuer: "yourIssuer",
+        audience: "yourAudience",
+        claims: claims,
+        expires: DateTime.Now.AddMinutes(30),
+        signingCredentials: creds);
+
+    return TypedResults.Ok(new JwtPayload
+    {
+        { "token", new JwtSecurityTokenHandler().WriteToken(token) },
+        { "expiration", token.ValidTo }
+    });
 });
 
 app.Run();
