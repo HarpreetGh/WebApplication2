@@ -1,25 +1,31 @@
+using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Models;
+using Services;
 
 namespace Controllers {
     [ApiController]
     [Route("/users")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class UserController: ControllerBase {
-        private Dictionary<int, User> users = new Dictionary<int, User>();
+        private IUserInterface userService;
 
+        public UserController(IUserInterface US) {
+            userService = US;
+        }
+        
         [HttpGet]
-        public ActionResult<IEnumerable<User>> GetUsers()
+        public ActionResult<IEnumerable<User>> GetUser()
         {
-            return Ok(users.Values);
+            return Ok(userService.Users.Values);
         }
 
         [HttpGet("{id}")]
         public ActionResult<User> GetUser(int id)
         {
-            if (users.TryGetValue(id, out var user))
+            if (userService.Users.TryGetValue(id, out var user))
             {
                 return Ok(user);
             }
@@ -29,20 +35,20 @@ namespace Controllers {
         [HttpPost]
         public ActionResult<User> CreateUser(User user)
         {
-            if (users.ContainsKey(user.Id))
+            if (userService.Users.ContainsKey(user.Id))
             {
                 return Conflict("User with this ID already exists.");
             }
-            users[user.Id] = user;
+            userService.Users[user.Id] = user;
             return Created($"/users/{user.Id}", user);
         }
 
         [HttpPut("{id}")]
         public ActionResult<User> UpdateUser(int id, User updatedUser)
         {
-            if (users.ContainsKey(id))
+            if (userService.Users.ContainsKey(id))
             {
-                users[id] = updatedUser;
+                userService.Users[id] = updatedUser;
                 return Ok(updatedUser);
             }
             return NotFound();
@@ -50,6 +56,6 @@ namespace Controllers {
 
         [HttpDelete("{id}")]
         public ActionResult DeleteUser(int id) =>
-            users.Remove(id) ? NoContent() : NotFound();
+            userService.Users.Remove(id) ? NoContent() : NotFound();
     }
 }

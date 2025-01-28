@@ -4,8 +4,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Middleware;
 using Models;
+using Services;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -55,6 +55,9 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+builder.Services.AddSingleton<ITokenInterface, TokenService>();
+builder.Services.AddSingleton<IUserInterface, UserService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -77,35 +80,14 @@ app.MapControllers();
 
 app.MapGet("/", () => TypedResults.Ok("Hello World!"));
 
-app.MapPost("/token", Results<BadRequest<string>, Ok<JwtPayload>>(User user) =>
+app.MapPost("/token", Results<BadRequest<string>, Ok<JwtPayload>>(User user, ITokenInterface tokenService) =>
 {
     if (user == null || string.IsNullOrEmpty(user.Name) || string.IsNullOrEmpty(user.Email))
     {
         return TypedResults.BadRequest("Invalid user data.");
     }
 
-    var claims = new[]
-    {
-        new Claim(JwtRegisteredClaimNames.Sub, user.Name),
-        new Claim(JwtRegisteredClaimNames.Email, user.Email),
-        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-    };
-
-    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-    var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-    var token = new JwtSecurityToken(
-        issuer: "yourIssuer",
-        audience: "yourAudience",
-        claims: claims,
-        expires: DateTime.Now.AddMinutes(30),
-        signingCredentials: creds);
-
-    return TypedResults.Ok(new JwtPayload
-    {
-        { "token", new JwtSecurityTokenHandler().WriteToken(token) },
-        { "expiration", token.ValidTo }
-    });
+    return TypedResults.Ok(tokenService.GenerateToken(user));
 });
 
 app.Run();
