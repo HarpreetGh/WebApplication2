@@ -42,3 +42,4 @@ C:\Users\harpr\OneDrive\Documents\GitHub\WebApplication2\WebApplication2\bin\Deb
 C:\Users\harpr\OneDrive\Documents\GitHub\WebApplication2\WebApplication2\bin\Debug\net9.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 C:\Users\harpr\OneDrive\Documents\GitHub\WebApplication2\WebApplication2\bin\Debug\net9.0\Microsoft.IdentityModel.Tokens.dll
 C:\Users\harpr\OneDrive\Documents\GitHub\WebApplication2\WebApplication2\bin\Debug\net9.0\System.IdentityModel.Tokens.Jwt.dll
+C:\Users\harpr\OneDrive\Documents\GitHub\WebApplication2\WebApplication2\obj\Debug\net9.0\WebApplication2.sourcelink.json
